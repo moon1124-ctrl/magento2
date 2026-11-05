@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Citybeach\Catchfeeder\Api\ProductFeedInterface"
+                type="Citybeach\Catchfeeder\Model\ProductFeed"/>
+    <preference for="Citybeach\Catchfeeder\Api\OrderImportInterface"
+                type="Citybeach\Catchfeeder\Model\OrderImporter"/>
+    <type name="Magento\CatalogInventory\Model\Quote\Item\QuantityValidator">
+        <plugin name="citybeach_catchfeeder_skip_stock"
+                type="Citybeach\Catchfeeder\Plugin\SkipStockCheck"/>
+    </type>
+</config>

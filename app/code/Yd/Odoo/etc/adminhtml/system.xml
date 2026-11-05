@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="yd_odoo" translate="label" sortOrder="230" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>Odoo</label>
+            <tab>general</tab>
+            <resource>Yd_Odoo::config</resource>
+            <group id="connection" translate="label" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Connection</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="url" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Odoo URL</label>
+                    <comment>Example: https://odoo.example.com</comment>
+                </field>
+                <field id="port" translate="label" type="text" sortOrder="30" showInDefault="1">
+                    <label>Port</label>
+                </field>
+                <field id="database" translate="label" type="text" sortOrder="40" showInDefault="1">
+                    <label>Database</label>
+                </field>
+                <field id="username" translate="label" type="text" sortOrder="50" showInDefault="1">
+                    <label>Username</label>
+                </field>
+                <field id="password" translate="label" type="obscure" sortOrder="60" showInDefault="1">
+                    <label>Password</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+            </group>
+            <group id="sync" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Synchronization</label>
+                <field id="auto_product" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Export products on save</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="auto_inventory" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Send stock when a product is created in Odoo</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Sends the current Magento quantity. It does not add a delta.</comment>
+                </field>
+                <field id="export_orders" translate="label" type="select" sortOrder="30" showInDefault="1">
+                    <label>Export orders after payment</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Runs when a paid invoice is saved. Unpaid orders stay in Magento.</comment>
+                </field>
+                <field id="pricelist_id" translate="label" type="text" sortOrder="40" showInDefault="1">
+                    <label>Odoo pricelist id</label>
+                </field>
+                <field id="warehouse_id" translate="label" type="text" sortOrder="50" showInDefault="1">
+                    <label>Odoo warehouse id</label>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

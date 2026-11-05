@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <routes>
+        <route url="/V1/catch/products" method="GET">
+            <service class="Citybeach\Catchfeeder\Api\ProductFeedInterface" method="summary"/>
+            <resources>
+                <resource ref="Citybeach_Catchfeeder::feed"/>
+            </resources>
+        </route>
+        <route url="/V1/catch/products/since" method="GET">
+            <service class="Citybeach\Catchfeeder\Api\ProductFeedInterface" method="since"/>
+            <resources>
+                <resource ref="Citybeach_Catchfeeder::feed"/>
+            </resources>
+        </route>
+        <route url="/V1/catch/stock" method="GET">
+            <service class="Citybeach\Catchfeeder\Api\ProductFeedInterface" method="stock"/>
+            <resources>
+                <resource ref="Citybeach_Catchfeeder::feed"/>
+            </resources>
+        </route>
+        <route url="/V1/catch/orders" method="POST">
+            <service class="Citybeach\Catchfeeder\Api\OrderImportInterface" method="jsonToOrder"/>
+            <resources>
+                <resource ref="Citybeach_Catchfeeder::feed"/>
+            </resources>
+        </route>
+    </routes>
+</config>

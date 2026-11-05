@@ -1,0 +1,52 @@
+{
+    "yd_odoo_product_map": {
+        "column": {
+            "entity_id": true,
+            "product_id": true,
+            "sku": true,
+            "odoo_id": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "YD_ODOO_PRODUCT_MAP_PRODUCT_ID": true
+        },
+        "index": {
+            "YD_ODOO_PRODUCT_MAP_SKU": true
+        }
+    },
+    "yd_odoo_order_map": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "increment_id": true,
+            "odoo_id": true,
+            "invoiced": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "YD_ODOO_ORDER_MAP_ORDER_ID": true
+        }
+    },
+    "yd_odoo_partner_map": {
+        "column": {
+            "entity_id": true,
+            "email": true,
+            "odoo_id": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "YD_ODOO_PARTNER_MAP_EMAIL": true
+        }
+    },
+    "yd_odoo_payment_map": {
+        "column": {
+            "entity_id": true,
+            "method_code": true,
+            "odoo_id": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "YD_ODOO_PAYMENT_MAP_METHOD": true
+        }
+    }
+}

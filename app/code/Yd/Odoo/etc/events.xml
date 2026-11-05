@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="catalog_product_save_commit_after">
+        <observer name="yd_odoo_product_save" instance="Yd\Odoo\Observer\ProductSave"/>
+    </event>
+    <event name="sales_order_invoice_save_after">
+        <observer name="yd_odoo_invoice_save" instance="Yd\Odoo\Observer\InvoiceSave"/>
+    </event>
+    <event name="sales_order_shipment_save_after">
+        <observer name="yd_odoo_shipment_save" instance="Yd\Odoo\Observer\ShipmentSave"/>
+    </event>
+    <event name="order_cancel_after">
+        <observer name="yd_odoo_order_cancel" instance="Yd\Odoo\Observer\OrderCancel"/>
+    </event>
+</config>

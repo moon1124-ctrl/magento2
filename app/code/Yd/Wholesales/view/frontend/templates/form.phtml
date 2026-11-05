@@ -1,0 +1,58 @@
+<?php
+/**
+ * @var \Yd\Wholesales\Block\Form $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+?>
+<div class="wholesale-application">
+    <h1><?= $escaper->escapeHtml(__('Wholesale Application Form')) ?></h1>
+    <p><?= $escaper->escapeHtml(__('Do you operate a tablet or mobile phone service business? You may qualify for discounted wholesale rates!')) ?></p>
+    <form class="form wholesale-application-form"
+          action="<?= $escaper->escapeUrl($block->getSubmitUrl()) ?>"
+          method="post"
+          id="wholesale-application"
+          data-mage-init='{"validation":{}}'>
+        <?= $block->getBlockHtml('formkey') ?>
+        <fieldset class="fieldset">
+            <?php
+            $fields = [
+                ['compName', 'Company name', true, 'required-entry', 'text', 40],
+                ['tradeName', 'Trading name', false, '', 'text', 40],
+                ['abn', 'ABN', false, '', 'text', 20],
+                ['acn', 'ACN', false, '', 'text', 20],
+                ['wsEmail', 'Email', true, 'required-entry validate-email', 'email', 255],
+                ['phoneNum', 'Phone number', false, '', 'tel', 40],
+                ['mobileNum', 'Mobile', true, 'required-entry', 'tel', 40],
+                ['tradeAdd', 'Trading address', false, '', 'text', 255],
+                ['suburb', 'Suburb', false, '', 'text', 80],
+                ['wsCountry', 'Country', false, '', 'text', 80],
+                ['wsPostcode', 'Postcode', false, '', 'text', 20],
+                ['wsWebsite', 'Website', false, '', 'text', 255],
+                ['monthlyParts', 'Monthly parts spend estimate in $', false, 'validate-number', 'text', 20],
+            ];
+            foreach ($fields as [$name, $label, $required, $rules, $type, $max]):
+                ?>
+                <div class="field <?= $required ? 'required' : '' ?>">
+                    <label class="label" for="<?= $escaper->escapeHtmlAttr($name) ?>">
+                        <span><?= $escaper->escapeHtml(__($label)) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="<?= $escaper->escapeHtmlAttr($type) ?>"
+                               id="<?= $escaper->escapeHtmlAttr($name) ?>"
+                               name="<?= $escaper->escapeHtmlAttr($name) ?>"
+                               class="input-text <?= $escaper->escapeHtmlAttr($rules) ?>"
+                               maxlength="<?= (int) $max ?>"
+                               <?= $required ? 'data-validate="{required:true}"' : '' ?>/>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </fieldset>
+        <div class="actions-toolbar">
+            <div class="primary">
+                <button type="submit" class="action submit primary" title="<?= $escaper->escapeHtmlAttr(__('Send')) ?>">
+                    <span><?= $escaper->escapeHtml(__('Send')) ?></span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

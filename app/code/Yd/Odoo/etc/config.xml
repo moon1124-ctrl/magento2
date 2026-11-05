@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <yd_odoo>
+            <connection>
+                <enabled>0</enabled>
+                <port>8069</port>
+            </connection>
+            <sync>
+                <auto_product>0</auto_product>
+                <auto_inventory>0</auto_inventory>
+                <export_orders>0</export_orders>
+            </sync>
+        </yd_odoo>
+    </default>
+</config>

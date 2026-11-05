@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="yd_odoo_product_map" resource="default" engine="innodb" comment="Magento to Odoo product ids">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"/>
+        <column xsi:type="int" name="product_id" unsigned="true" nullable="false"/>
+        <column xsi:type="varchar" name="sku" nullable="false" length="64"/>
+        <column xsi:type="int" name="odoo_id" unsigned="true" nullable="false"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="YD_ODOO_PRODUCT_MAP_PRODUCT_ID">
+            <column name="product_id"/>
+        </constraint>
+        <index referenceId="YD_ODOO_PRODUCT_MAP_SKU" indexType="btree">
+            <column name="sku"/>
+        </index>
+    </table>
+    <table name="yd_odoo_order_map" resource="default" engine="innodb" comment="Magento to Odoo order ids">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false"/>
+        <column xsi:type="varchar" name="increment_id" nullable="false" length="32"/>
+        <column xsi:type="int" name="odoo_id" unsigned="true" nullable="false"/>
+        <column xsi:type="smallint" name="invoiced" unsigned="true" nullable="false" default="0"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="YD_ODOO_ORDER_MAP_ORDER_ID">
+            <column name="order_id"/>
+        </constraint>
+    </table>
+    <table name="yd_odoo_partner_map" resource="default" engine="innodb" comment="Customer email to Odoo partner">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"/>
+        <column xsi:type="varchar" name="email" nullable="false" length="255"/>
+        <column xsi:type="int" name="odoo_id" unsigned="true" nullable="false"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="YD_ODOO_PARTNER_MAP_EMAIL">
+            <column name="email"/>
+        </constraint>
+    </table>
+    <table name="yd_odoo_payment_map" resource="default" engine="innodb" comment="Payment method to Odoo journal">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"/>
+        <column xsi:type="varchar" name="method_code" nullable="false" length="64"/>
+        <column xsi:type="int" name="odoo_id" unsigned="true" nullable="false"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="YD_ODOO_PAYMENT_MAP_METHOD">
+            <column name="method_code"/>
+        </constraint>
+    </table>
+</schema>

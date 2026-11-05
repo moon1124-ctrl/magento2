@@ -1,0 +1,21 @@
+{
+    "name": "octocub/module-upc-copy",
+    "description": "Copy a 13-digit SKU into empty UPC and EAN attributes before a product is saved.",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "OSL-3.0",
+    "require": {
+        "php": "~8.3.0||~8.4.0||~8.5.0",
+        "magento/framework": "103.0.*",
+        "magento/module-catalog": "104.0.*",
+        "magento/module-eav": "102.1.*"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Octocub\\UpcCopy\\": ""
+        }
+    }
+}
