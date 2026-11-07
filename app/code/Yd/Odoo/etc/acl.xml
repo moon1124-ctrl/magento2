@@ -4,8 +4,14 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
-                <resource id="Magento_Config::config">
-                    <resource id="Yd_Odoo::config" title="Odoo Connection"/>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="Yd_Odoo::config"
+                                      title="Odoo Connection"
+                                      sortOrder="20"/>
+                        </resource>
+                    </resource>
                 </resource>
             </resource>
         </resources>
