@@ -73,6 +73,14 @@ class Assigner
         if (!preg_match('/^\d{13}$/', $sku)) {
             return;
         }
+        // An Odoo barcode already stored on either field must stay as assigned.
+        // Copy the SKU only when every present barcode field is still empty.
+        foreach ($present as $code) {
+            $current = $this->knownValue($product, $code);
+            if ($current['known'] && $this->hasValue($current['value'])) {
+                return;
+            }
+        }
         foreach ($present as $code) {
             $current = $this->knownValue($product, $code);
             if ($current['known'] && !$this->hasValue($current['value'])) {

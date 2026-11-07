@@ -30,6 +30,14 @@ class Config
         return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/import_stock');
     }
 
+    /**
+     * Stock flag on its own. A one-product test can write stock while the connection stays off.
+     */
+    public function stockSyncRequested(): bool
+    {
+        return $this->scopeConfig->isSetFlag('yd_odoo/sync/import_stock');
+    }
+
     public function endpoint(string $service): string
     {
         $url = rtrim((string) $this->scopeConfig->getValue('yd_odoo/connection/url'), '/');

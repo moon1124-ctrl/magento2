@@ -35,12 +35,12 @@
                 <field id="import_products" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>Import products</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Every 15 minutes, products changed in Odoo are created or updated in Magento by SKU. Orders are not sent to Odoo.</comment>
+                    <comment>Every 15 minutes, products changed in Odoo are created or updated in Magento by SKU. Orders are not sent to Odoo. A valid UPC-A is stored as UPC and as the matching EAN-13. Any other Odoo barcode is stored on EAN and an existing UPC is kept. An empty Odoo barcode does not clear either value. bin/magento yd:odoo:import --dry-run and --sku test one page or one product without moving the import cursor. Leave this and Enabled set to No until that test looks right.</comment>
                 </field>
                 <field id="import_stock" translate="label" type="select" sortOrder="20" showInDefault="1">
                     <label>Import stock quantities</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Sets the Magento quantity to the Odoo quantity. It does not add a delta.</comment>
+                    <comment>Writes the Odoo on-hand quantity onto the default inventory source only. That quantity replaces the source quantity. A negative Odoo quantity is stored as zero. Other sources are left unchanged.</comment>
                 </field>
             </group>
         </section>

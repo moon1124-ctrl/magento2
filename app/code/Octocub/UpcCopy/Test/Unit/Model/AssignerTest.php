@@ -150,7 +150,7 @@ class AssignerTest extends TestCase
         self::assertSame('', $product->getData('ean'));
     }
 
-    public function testThirteenDigitSkuFillsEmptyFieldsAndDoesNotGenerate(): void
+    public function testThirteenDigitSkuDoesNotFillASiblingWhenOneBarcodeIsSet(): void
     {
         $product = $this->product(['upc' => '', 'ean' => 'KEEP'], null, '4006381333931');
         $generator = $this->generator(true, [], true);
@@ -158,8 +158,20 @@ class AssignerTest extends TestCase
 
         (new Assigner($generator, $this->lookup()))->assign($product);
 
-        self::assertSame('4006381333931', $product->getData('upc'));
+        self::assertSame('', $product->getData('upc'));
         self::assertSame('KEEP', $product->getData('ean'));
+    }
+
+    public function testThirteenDigitSkuCopiesOnlyWhenEveryBarcodeIsEmpty(): void
+    {
+        $product = $this->product(['upc' => '', 'ean' => ''], null, '4006381333931');
+        $generator = $this->generator(true, [], true);
+        $generator->expects($this->never())->method('next');
+
+        (new Assigner($generator, $this->lookup()))->assign($product);
+
+        self::assertSame('4006381333931', $product->getData('upc'));
+        self::assertSame('4006381333931', $product->getData('ean'));
     }
 
     public function testStoredValueWinsOverTheThirteenDigitSku(): void
@@ -173,7 +185,7 @@ class AssignerTest extends TestCase
         (new Assigner($generator, $lookup))->assign($product);
 
         self::assertSame('036000291452', $product->getData('upc'));
-        self::assertSame('4006381333931', $product->getData('ean'));
+        self::assertSame('', $product->getData('ean'));
     }
 
     public function testOnlyTheAttributeThatExistsIsFilled(): void
