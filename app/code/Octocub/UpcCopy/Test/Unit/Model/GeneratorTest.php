@@ -14,6 +14,16 @@ use PHPUnit\Framework\TestCase;
 
 class GeneratorTest extends TestCase
 {
+    public function testNextDoesNotTouchProductIdentifiers(): void
+    {
+        $rows = [];
+        $log = [];
+        $code = $this->generator('036000', $rows, $log)->next();
+
+        self::assertSame(CheckDigit::append('03600000001'), $code);
+        self::assertSame(['036000' => 2], $rows);
+    }
+
     public function testFirstNumberIsElevenDataDigitsPlusTheCheckDigit(): void
     {
         $rows = [];
@@ -191,6 +201,7 @@ class GeneratorTest extends TestCase
         });
         $connection->method('fetchOne')->willReturnCallback(
             function ($sql, $bind = []) use (&$rows, &$log, &$locked) {
+                $this->assertCatalogUntouched($sql);
                 if (!str_contains((string) $sql, 'FOR UPDATE')) {
                     throw new \RuntimeException('Sequence read did not lock the row.');
                 }
@@ -202,6 +213,7 @@ class GeneratorTest extends TestCase
         );
         $connection->method('insert')->willReturnCallback(
             function ($table, array $bind) use (&$rows, &$log, $insert): int {
+                $this->assertCatalogUntouched($table);
                 $log[] = 'insert';
                 if ($insert !== null) {
                     $insert($bind);
@@ -218,6 +230,7 @@ class GeneratorTest extends TestCase
         );
         $connection->method('update')->willReturnCallback(
             function ($table, array $bind, $where = '') use (&$rows, &$log, $update): int {
+                $this->assertCatalogUntouched($table);
                 $log[] = 'update';
                 if ($update !== null) {
                     return $update($bind);
@@ -239,5 +252,12 @@ class GeneratorTest extends TestCase
         $config->method('getValue')->willReturn($prefix);
 
         return new Generator($config, $resource);
+    }
+
+    private function assertCatalogUntouched(mixed $value): void
+    {
+        if (is_string($value) && (str_contains($value, 'catalog_product') || str_contains($value, 'sku'))) {
+            throw new \RuntimeException('UPC generation touched a product identifier.');
+        }
     }
 }
