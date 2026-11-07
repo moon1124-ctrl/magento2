@@ -4,8 +4,14 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
-                <resource id="Magento_Config::config">
-                    <resource id="Octocub_UpcCopy::config" title="UPC Numbers"/>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="Octocub_UpcCopy::config"
+                                      title="UPC Numbers"
+                                      sortOrder="10"/>
+                        </resource>
+                    </resource>
                 </resource>
             </resource>
         </resources>
