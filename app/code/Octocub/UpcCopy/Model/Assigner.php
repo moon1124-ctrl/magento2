@@ -5,85 +5,150 @@ declare(strict_types=1);
 namespace Octocub\UpcCopy\Model;
 
 use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Eav\Model\Config as EavConfig;
+use Magento\Framework\Exception\LocalizedException;
 
 class Assigner
 {
-    private const ATTRIBUTES = ['upc', 'ean'];
-
     public function __construct(
-        private readonly EavConfig $eavConfig,
         private readonly Generator $generator,
-        private readonly CollectionFactory $collectionFactory
+        private readonly CatalogCodeLookup $lookup
     ) {
     }
 
+    /**
+     * @throws LocalizedException
+     */
     public function assign(Product $product): void
     {
-        $present = array_values(array_filter(self::ATTRIBUTES, fn (string $code): bool => $this->attributeExists($code)));
+        $present = $this->lookup->existingCodes();
         if ($present === []) {
             return;
         }
-        $sku = (string) $product->getSku();
-        if (preg_match('/^\d{13}$/', $sku)) {
-            foreach ($present as $code) {
-                $current = $product->getData($code);
-                if ($current === null || $current === '') {
-                    $product->setData($code, $sku);
-                }
-            }
-        }
-        if (!$this->generator->isEnabled() || !$this->isBlank($product, $present)) {
+        $this->preserveStored($product, $present);
+        $this->copyThirteenDigitSku($product, $present);
+        if (!$this->generator->isEnabled() || !$this->canGenerate($product, $present)) {
             return;
         }
-        $code = $this->unusedCode();
+        $code = $this->unusedCode($product);
         foreach ($present as $attribute) {
-            $current = $product->getData($attribute);
-            if ($current === null || $current === '') {
+            $current = $this->knownValue($product, $attribute);
+            if ($current['known'] && !$this->hasValue($current['value'])) {
                 $product->setData($attribute, $code);
             }
         }
     }
 
     /**
-     * @param string[] $attributes
+     * Put a stored UPC or EAN back onto a partial or blanked save so the EAV writer does not delete it.
+     *
+     * @param string[] $present
      */
-    private function isBlank(Product $product, array $attributes): bool
+    private function preserveStored(Product $product, array $present): void
     {
-        foreach ($attributes as $code) {
-            $current = $product->getData($code);
-            if ($current !== null && $current !== '') {
+        $productId = (int) $product->getId();
+        if ($productId < 1 || !$this->hasBlank($product, $present)) {
+            return;
+        }
+        $stored = $this->lookup->storedValues($productId);
+        foreach ($present as $code) {
+            $storedValue = $stored[$code] ?? null;
+            if (!$this->hasValue($storedValue)) {
+                continue;
+            }
+            $current = $this->knownValue($product, $code);
+            // Only fill a blank field that this save already includes. Adding a missing
+            // attribute would make the EAV writer insert a second row for a partial save.
+            if ($current['known'] && !$this->hasValue($current['value'])) {
+                $product->setData($code, $storedValue);
+            }
+        }
+    }
+
+    /**
+     * @param string[] $present
+     */
+    private function copyThirteenDigitSku(Product $product, array $present): void
+    {
+        $sku = (string) $product->getSku();
+        if (!preg_match('/^\d{13}$/', $sku)) {
+            return;
+        }
+        foreach ($present as $code) {
+            $current = $this->knownValue($product, $code);
+            if ($current['known'] && !$this->hasValue($current['value'])) {
+                $product->setData($code, $sku);
+            }
+        }
+    }
+
+    /**
+     * Generate only when every UPC and EAN attribute is in this save and still empty.
+     * A missing key means this is a partial save and the stored value must be left alone.
+     *
+     * @param string[] $present
+     */
+    private function canGenerate(Product $product, array $present): bool
+    {
+        foreach ($present as $code) {
+            $current = $this->knownValue($product, $code);
+            if (!$current['known'] || $this->hasValue($current['value'])) {
                 return false;
             }
         }
 
-        return true;
+        return $present !== [];
     }
 
-    private function unusedCode(): string
+    /**
+     * @param string[] $present
+     */
+    private function hasBlank(Product $product, array $present): bool
     {
+        foreach ($present as $code) {
+            $current = $this->knownValue($product, $code);
+            if (!$current['known'] || !$this->hasValue($current['value'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{known: bool, value: mixed}
+     */
+    private function knownValue(Product $product, string $code): array
+    {
+        $data = $product->getData();
+        if (!is_array($data) || !array_key_exists($code, $data)) {
+            return ['known' => false, 'value' => null];
+        }
+
+        return ['known' => true, 'value' => $data[$code]];
+    }
+
+    private function hasValue(mixed $value): bool
+    {
+        return $value !== null && $value !== '';
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function unusedCode(Product $product): string
+    {
+        $productId = (int) $product->getId();
+        $except = $productId > 0 ? $productId : null;
         for ($attempt = 0; $attempt < 20; $attempt++) {
             $code = $this->generator->next();
-            $collection = $this->collectionFactory->create();
-            $collection->addAttributeToFilter('ean', $code);
-            $collection->setPageSize(1);
-            if ($collection->getSize() === 0) {
+            if (strlen($code) !== 12 || !CheckDigit::isValid($code)) {
+                throw new LocalizedException(__('The generated UPC-A number is not valid.'));
+            }
+            if (!$this->lookup->isUsed($code, $except)) {
                 return $code;
             }
         }
 
-        throw new \Magento\Framework\Exception\LocalizedException(__('A unique UPC number could not be generated.'));
-    }
-
-    private function attributeExists(string $code): bool
-    {
-        try {
-            $attribute = $this->eavConfig->getAttribute(Product::ENTITY, $code);
-        } catch (\Throwable) {
-            return false;
-        }
-
-        return (bool) $attribute->getId();
+        throw new LocalizedException(__('A unique UPC number could not be generated.'));
     }
 }

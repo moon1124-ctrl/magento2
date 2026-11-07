@@ -1,8 +1,8 @@
 {
     "name": "octocub/module-upc-copy",
-    "description": "Copy a 13-digit SKU into UPC and EAN, generate the next EAN-13, and print a Zebra ZPL label.",
+    "description": "Copy a 13-digit SKU into empty UPC and EAN fields, generate the next UPC-A (11 data digits plus a check digit), and print a Zebra ZPL label.",
     "type": "magento2-module",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "license": "OSL-3.0",
     "require": {
         "php": "~8.3.0||~8.4.0||~8.5.0",

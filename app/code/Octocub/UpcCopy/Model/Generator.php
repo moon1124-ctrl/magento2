@@ -6,10 +6,13 @@ namespace Octocub\UpcCopy\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 
 class Generator
 {
+    private const DATA_LENGTH = 11;
+
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly ResourceConnection $resource
@@ -21,46 +24,124 @@ class Generator
         return $this->scopeConfig->isSetFlag('octocub_upc/generate/enabled');
     }
 
+    /**
+     * Next UPC-A: 11 data digits plus one check digit.
+     *
+     * @throws LocalizedException
+     */
     public function next(): string
     {
-        $prefix = preg_replace('/\D/', '', (string) $this->scopeConfig->getValue('octocub_upc/generate/prefix')) ?? '';
-        $length = strlen($prefix);
-        if ($length < 6 || $length > 11) {
-            throw new LocalizedException(__('Set a GS1 company prefix of 6 to 11 digits before generating UPC numbers.'));
+        $prefix = PrefixValidator::normalize((string) $this->scopeConfig->getValue('octocub_upc/generate/prefix'));
+        if ($prefix === '') {
+            throw new LocalizedException(
+                __('Set a GS1 company prefix of 6 to 10 digits before generating UPC-A numbers.')
+            );
         }
-        $width = 12 - $length;
+        $width = self::DATA_LENGTH - strlen($prefix);
+        if ($width < 1) {
+            throw new LocalizedException(
+                __('The GS1 company prefix must be 6 to 10 digits so a UPC-A number keeps at least one sequence digit.')
+            );
+        }
+        $serial = $this->allocate($prefix, $width);
+        $body = $prefix . $serial;
+        if (strlen($body) !== self::DATA_LENGTH) {
+            throw new LocalizedException(__('UPC-A generation produced %1 data digits instead of 11.', strlen($body)));
+        }
+
+        return CheckDigit::append($body);
+    }
+
+    /**
+     * Reserve the next serial under a row lock. The lock is held until the surrounding
+     * product-save transaction commits, so a failed save rolls the number back.
+     *
+     * @throws LocalizedException
+     */
+    private function allocate(string $prefix, int $width): string
+    {
         $connection = $this->resource->getConnection();
         $table = $this->resource->getTableName('octocub_upc_sequence');
+        $maximum = (10 ** $width) - 1;
         $connection->beginTransaction();
         try {
-            $connection->insertOnDuplicate($table, ['prefix' => $prefix, 'next_number' => 1], ['prefix']);
-            $next = (int) $connection->fetchOne(
-                'SELECT next_number FROM ' . $table . ' WHERE prefix = ? FOR UPDATE',
-                [$prefix]
-            );
-            $serial = str_pad((string) $next, $width, '0', STR_PAD_LEFT);
-            if (strlen($serial) > $width) {
+            $next = $this->reserve($connection, $table, $prefix);
+            if ($next > $maximum) {
                 throw new LocalizedException(__('The UPC sequence for this prefix is exhausted.'));
             }
-            $body = $prefix . $serial;
-            $connection->update($table, ['next_number' => $next + 1], ['prefix = ?' => $prefix]);
+            $updated = $connection->update(
+                $table,
+                ['next_number' => $next + 1],
+                ['prefix = ?' => $prefix]
+            );
+            if ($updated !== 1) {
+                throw new LocalizedException(__('The UPC sequence for this prefix could not be reserved.'));
+            }
             $connection->commit();
         } catch (\Throwable $exception) {
-            $connection->rollBack();
+            $this->rollBack($connection);
             throw $exception;
         }
 
-        return $body . $this->checkDigit($body);
+        return str_pad((string) $next, $width, '0', STR_PAD_LEFT);
     }
 
-    private function checkDigit(string $body): string
+    /**
+     * @throws LocalizedException
+     */
+    private function reserve(AdapterInterface $connection, string $table, string $prefix): int
     {
-        $sum = 0;
-        $digits = str_split($body);
-        foreach ($digits as $index => $digit) {
-            $sum += ((int) $digit) * ($index % 2 === 0 ? 1 : 3);
+        $current = $this->fetchLocked($connection, $table, $prefix);
+        if ($current === false || $current === null || $current === '') {
+            try {
+                $connection->insert($table, ['prefix' => $prefix, 'next_number' => 1]);
+            } catch (\Throwable $insertError) {
+                try {
+                    $current = $this->fetchLocked($connection, $table, $prefix);
+                } catch (\Throwable) {
+                    throw $insertError;
+                }
+                if ($current === false || $current === null || $current === '') {
+                    throw $insertError;
+                }
+
+                return $this->positiveInt($current);
+            }
+            $current = $this->fetchLocked($connection, $table, $prefix);
         }
 
-        return (string) ((10 - ($sum % 10)) % 10);
+        return $this->positiveInt($current);
+    }
+
+    private function fetchLocked(AdapterInterface $connection, string $table, string $prefix): mixed
+    {
+        $sql = sprintf(
+            'SELECT next_number FROM %s WHERE prefix = ?',
+            $connection->quoteIdentifier($table)
+        );
+
+        return $connection->fetchOne($connection->forUpdate($sql), [$prefix]);
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function positiveInt(mixed $current): int
+    {
+        $next = (int) $current;
+        if ($next < 1) {
+            throw new LocalizedException(__('The UPC sequence for this prefix is exhausted.'));
+        }
+
+        return $next;
+    }
+
+    private function rollBack(AdapterInterface $connection): void
+    {
+        try {
+            $connection->rollBack();
+        } catch (\Throwable) {
+            // Keep the original failure when the connection is already closed.
+        }
     }
 }

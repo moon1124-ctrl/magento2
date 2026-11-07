@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
-    <table name="octocub_upc_sequence" resource="default" engine="innodb" comment="Next UPC sequence for a company prefix">
-        <column xsi:type="varchar" name="prefix" nullable="false" length="11"/>
-        <column xsi:type="int" name="next_number" unsigned="true" nullable="false" default="1"/>
+    <table name="octocub_upc_sequence" resource="default" engine="innodb" comment="Next UPC-A serial for a GS1 company prefix">
+        <column xsi:type="varchar" name="prefix" nullable="false" length="10" comment="GS1 company prefix, 6 to 10 digits"/>
+        <column xsi:type="int" name="next_number" unsigned="true" nullable="false" default="1" comment="Next serial to issue"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="prefix"/>
         </constraint>

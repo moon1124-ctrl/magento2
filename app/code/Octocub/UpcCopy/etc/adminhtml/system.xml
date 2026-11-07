@@ -7,15 +7,16 @@
             <tab>catalog</tab>
             <resource>Octocub_UpcCopy::config</resource>
             <group id="generate" translate="label" sortOrder="10" showInDefault="1">
-                <label>Generate EAN-13</label>
+                <label>Generate UPC-A</label>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
                     <label>Generate a number when UPC and EAN are empty</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>A 13-digit SKU is still copied first. Generation runs only when both attributes are empty.</comment>
+                    <comment>Generation is off until you enable it. It runs only when every UPC and EAN attribute is included in the save and is still empty. An existing value is kept, including when a later save leaves the field blank. A 13-digit SKU is copied into an empty field before generation.</comment>
                 </field>
-                <field id="prefix" translate="label" type="text" sortOrder="20" showInDefault="1">
+                <field id="prefix" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>GS1 company prefix</label>
-                    <comment>Digits only, 6 to 11 characters. The sequence fills the rest of the 12-digit body, then a check digit is added.</comment>
+                    <comment>Digits only, 6 to 10 characters. The prefix plus the sequence is 11 data digits, then one check digit is added (UPC-A, 12 digits).</comment>
+                    <backend_model>Octocub\UpcCopy\Model\Config\Backend\Prefix</backend_model>
                     <validate>validate-digits</validate>
                 </field>
             </group>
@@ -23,10 +24,11 @@
                 <label>Zebra printer</label>
                 <field id="host" translate="label" type="text" sortOrder="10" showInDefault="1">
                     <label>Printer host</label>
-                    <comment>Leave empty to download a ZPL file only. When set, the product button also sends the label to this printer on port 9100.</comment>
+                    <comment>Leave empty to download a ZPL file only. When set, the product button also sends the label to this printer. UPC-A is printed with ^BUN (11 data digits; the printer adds the check digit). A stored EAN-13 that is not a UPC-A is printed with ^BEN.</comment>
                 </field>
                 <field id="port" translate="label" type="text" sortOrder="20" showInDefault="1">
                     <label>Printer port</label>
+                    <comment>Default is 9100.</comment>
                 </field>
             </group>
         </section>
