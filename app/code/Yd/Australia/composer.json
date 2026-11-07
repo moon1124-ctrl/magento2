@@ -1,0 +1,16 @@
+{
+    "name": "yd/module-australia",
+    "description": "Australian GST tax rate and store defaults for a fresh Magento install.",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "OSL-3.0",
+    "require": {
+        "php": "~8.3.0||~8.4.0||~8.5.0",
+        "magento/framework": "103.0.*",
+        "magento/module-tax": "100.4.*"
+    },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": {"Yd\\Australia\\": ""}
+    }
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="yd_office365" translate="label" sortOrder="210" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>Microsoft 365 Email</label>
+            <tab>general</tab>
+            <resource>Yd_Office365::config</resource>
+            <group id="smtp" translate="label" sortOrder="10" showInDefault="1">
+                <label>SMTP</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Send transactional email through Microsoft 365</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="host" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Host</label>
+                </field>
+                <field id="port" translate="label" type="text" sortOrder="30" showInDefault="1">
+                    <label>Port</label>
+                    <comment>587 uses STARTTLS.</comment>
+                </field>
+                <field id="username" translate="label" type="text" sortOrder="40" showInDefault="1">
+                    <label>Mailbox</label>
+                    <comment>The From address on Magento emails must be this mailbox, or an address it is allowed to send as.</comment>
+                </field>
+                <field id="password" translate="label" type="obscure" sortOrder="50" showInDefault="1">
+                    <label>Password</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <eway>
+                <active>0</active>
+                <model>Eway\Rapid\Model\Eway</model>
+                <group>eway</group>
+                <title>Credit card (eWAY)</title>
+                <payment_action>authorize_capture</payment_action>
+                <order_status>pending_payment</order_status>
+                <sandbox>1</sandbox>
+                <allowspecific>0</allowspecific>
+                <sort_order>10</sort_order>
+            </eway>
+        </payment>
+    </default>
+</config>

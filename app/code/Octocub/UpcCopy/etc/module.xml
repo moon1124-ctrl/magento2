@@ -4,6 +4,8 @@
     <module name="Octocub_UpcCopy">
         <sequence>
             <module name="Magento_Catalog"/>
+            <module name="Magento_Config"/>
+            <module name="Magento_Backend"/>
         </sequence>
     </module>
 </config>

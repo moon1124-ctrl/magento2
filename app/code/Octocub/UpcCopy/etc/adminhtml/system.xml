@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="octocub_upc" translate="label" sortOrder="240" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>UPC Numbers</label>
+            <tab>catalog</tab>
+            <resource>Octocub_UpcCopy::config</resource>
+            <group id="generate" translate="label" sortOrder="10" showInDefault="1">
+                <label>Generate EAN-13</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Generate a number when UPC and EAN are empty</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>A 13-digit SKU is still copied first. Generation runs only when both attributes are empty.</comment>
+                </field>
+                <field id="prefix" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>GS1 company prefix</label>
+                    <comment>Digits only, 6 to 11 characters. The sequence fills the rest of the 12-digit body, then a check digit is added.</comment>
+                    <validate>validate-digits</validate>
+                </field>
+            </group>
+            <group id="zebra" translate="label" sortOrder="20" showInDefault="1">
+                <label>Zebra printer</label>
+                <field id="host" translate="label" type="text" sortOrder="10" showInDefault="1">
+                    <label>Printer host</label>
+                    <comment>Leave empty to download a ZPL file only. When set, the product button also sends the label to this printer on port 9100.</comment>
+                </field>
+                <field id="port" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Printer port</label>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

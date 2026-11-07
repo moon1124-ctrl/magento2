@@ -8,9 +8,8 @@
                 <port>8069</port>
             </connection>
             <sync>
-                <auto_product>0</auto_product>
-                <auto_inventory>0</auto_inventory>
-                <export_orders>0</export_orders>
+                <import_products>0</import_products>
+                <import_stock>1</import_stock>
             </sync>
         </yd_odoo>
     </default>

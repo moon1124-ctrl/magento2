@@ -1,6 +1,6 @@
 {
     "name": "yd/module-odoo",
-    "description": "Odoo product, absolute stock, and paid-order sync for the Webkul bridge methods.",
+    "description": "Import products and stock from Odoo into Magento. Orders stay in Magento.",
     "type": "magento2-module",
     "version": "1.0.0",
     "license": "OSL-3.0",

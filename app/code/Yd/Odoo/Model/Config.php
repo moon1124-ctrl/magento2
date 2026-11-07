@@ -20,29 +20,14 @@ class Config
         return $this->scopeConfig->isSetFlag('yd_odoo/connection/enabled');
     }
 
-    public function autoProduct(): bool
+    public function importProducts(): bool
     {
-        return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/auto_product');
+        return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/import_products');
     }
 
-    public function autoInventory(): bool
+    public function importStock(): bool
     {
-        return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/auto_inventory');
-    }
-
-    public function exportOrders(): bool
-    {
-        return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/export_orders');
-    }
-
-    public function pricelistId(): int
-    {
-        return (int) $this->scopeConfig->getValue('yd_odoo/sync/pricelist_id');
-    }
-
-    public function warehouseId(): int
-    {
-        return (int) $this->scopeConfig->getValue('yd_odoo/sync/warehouse_id');
+        return $this->isEnabled() && $this->scopeConfig->isSetFlag('yd_odoo/sync/import_stock');
     }
 
     public function endpoint(string $service): string

@@ -4,7 +4,7 @@
     <system>
         <section id="yd_odoo" translate="label" sortOrder="230" showInDefault="1" showInWebsite="0" showInStore="0">
             <label>Odoo</label>
-            <tab>general</tab>
+            <tab>catalog</tab>
             <resource>Yd_Odoo::config</resource>
             <group id="connection" translate="label" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Connection</label>
@@ -31,26 +31,16 @@
                 </field>
             </group>
             <group id="sync" translate="label" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
-                <label>Synchronization</label>
-                <field id="auto_product" translate="label" type="select" sortOrder="10" showInDefault="1">
-                    <label>Export products on save</label>
+                <label>Import from Odoo</label>
+                <field id="import_products" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Import products</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Every 15 minutes, products changed in Odoo are created or updated in Magento by SKU. Orders are not sent to Odoo.</comment>
                 </field>
-                <field id="auto_inventory" translate="label" type="select" sortOrder="20" showInDefault="1">
-                    <label>Send stock when a product is created in Odoo</label>
+                <field id="import_stock" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Import stock quantities</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Sends the current Magento quantity. It does not add a delta.</comment>
-                </field>
-                <field id="export_orders" translate="label" type="select" sortOrder="30" showInDefault="1">
-                    <label>Export orders after payment</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Runs when a paid invoice is saved. Unpaid orders stay in Magento.</comment>
-                </field>
-                <field id="pricelist_id" translate="label" type="text" sortOrder="40" showInDefault="1">
-                    <label>Odoo pricelist id</label>
-                </field>
-                <field id="warehouse_id" translate="label" type="text" sortOrder="50" showInDefault="1">
-                    <label>Odoo warehouse id</label>
+                    <comment>Sets the Magento quantity to the Odoo quantity. It does not add a delta.</comment>
                 </field>
             </group>
         </section>
