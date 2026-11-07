@@ -18,7 +18,7 @@ class ZebraLabel extends Generic
         return [
             'label' => __('Zebra label'),
             'class' => 'action-secondary',
-            'on_click' => sprintf("location.href = '%s';", $this->getUrl('octocub_upc/product/print', ['id' => $product->getId()])),
+            'on_click' => sprintf("location.href = '%s';", $this->getUrl('octocub_upc/product/printLabel', ['id' => $product->getId()])),
             'sort_order' => 25,
         ];
     }
