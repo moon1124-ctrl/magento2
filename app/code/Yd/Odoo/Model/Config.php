@@ -6,6 +6,7 @@ namespace Yd\Odoo\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Exception\LocalizedException;
 
 class Config
 {
@@ -38,19 +39,66 @@ class Config
         return $this->scopeConfig->isSetFlag('yd_odoo/sync/import_stock');
     }
 
+    /**
+     * @throws LocalizedException
+     */
     public function endpoint(string $service): string
     {
-        $url = rtrim((string) $this->scopeConfig->getValue('yd_odoo/connection/url'), '/');
-        $port = (int) $this->scopeConfig->getValue('yd_odoo/connection/port');
-        $parts = parse_url($url);
-        if ($parts === false || empty($parts['host'])) {
-            return $url . '/xmlrpc/' . $service;
+        if ($service !== 'common' && $service !== 'object') {
+            throw new LocalizedException(__('Unknown Odoo XML-RPC service.'));
         }
-        $scheme = $parts['scheme'] ?? 'http';
-        $host = $parts['host'];
-        $portPart = isset($parts['port']) ? '' : ($port > 0 ? ':' . $port : '');
+        $parts = parse_url(trim((string) $this->scopeConfig->getValue('yd_odoo/connection/url')));
+        if (!is_array($parts) || empty($parts['host']) || empty($parts['scheme'])) {
+            throw new LocalizedException(__('Set the Odoo URL to an absolute https:// address.'));
+        }
+        if (strtolower((string) $parts['scheme']) !== 'https') {
+            throw new LocalizedException(__('The Odoo URL must use HTTPS so the XML-RPC password is encrypted in transit.'));
+        }
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            throw new LocalizedException(__('Remove the username and password from the Odoo URL.'));
+        }
+        $host = (string) $parts['host'];
+        if (preg_match('/[\s\/\\\\#?]/', $host) === 1) {
+            throw new LocalizedException(__('The Odoo URL host is not valid.'));
+        }
+        $port = $this->portSuffix($parts);
+        $path = isset($parts['path']) ? rtrim((string) $parts['path'], '/') : '';
+        $path = preg_replace('#/xmlrpc(/2)?(/(common|object))?$#', '', $path) ?? $path;
 
-        return $scheme . '://' . $host . $portPart . '/xmlrpc/' . $service;
+        return 'https://' . $host . $port . $path . '/xmlrpc/2/' . $service;
+    }
+
+    /**
+     * @param array<string, mixed> $parts
+     * @throws LocalizedException
+     */
+    private function portSuffix(array $parts): string
+    {
+        if (isset($parts['port'])) {
+            return $this->explicitPort((int) $parts['port']);
+        }
+        $configured = (int) $this->scopeConfig->getValue('yd_odoo/connection/port');
+        // 8069 is Odoo's cleartext port. Do not attach it to an https:// host.
+        if ($configured === 443 || $configured === 8069 || $configured === 0) {
+            return '';
+        }
+
+        return $this->explicitPort($configured);
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function explicitPort(int $port): string
+    {
+        if ($port < 1 || $port > 65535) {
+            throw new LocalizedException(__('The Odoo port is not valid.'));
+        }
+        if ($port === 443) {
+            return '';
+        }
+
+        return ':' . $port;
     }
 
     public function database(): string

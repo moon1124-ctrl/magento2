@@ -8,10 +8,14 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\HTTP\Client\Curl;
 
 /**
- * Odoo classic XML-RPC (login + execute), which is what the Magento 1 bridge called.
+ * Odoo 10 XML-RPC 2 client. Calls are limited to authenticate and execute_kw.
  */
 class XmlRpcClient
 {
+    private const METHODS = ['authenticate', 'execute_kw'];
+
+    private const MAX_BODY = 2097152;
+
     public function __construct(private readonly Curl $curl)
     {
     }
@@ -21,15 +25,30 @@ class XmlRpcClient
      */
     public function call(string $endpoint, string $method, array $params): mixed
     {
+        $this->assertTransport($endpoint, $method);
         $this->curl->setTimeout(30);
-        $this->curl->setHeaders(['Content-Type' => 'text/xml']);
-        $this->curl->post($endpoint, $this->encodeRequest($method, $params));
-        $status = $this->curl->getStatus();
+        $this->curl->setOptions([
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+        ]);
+        $this->curl->setHeaders(['Content-Type' => 'text/xml; charset=utf-8']);
+        try {
+            $this->curl->post($endpoint, $this->encodeRequest($method, $params));
+            $status = $this->curl->getStatus();
+            $body = (string) $this->curl->getBody();
+        } catch (\Throwable $exception) {
+            throw new LocalizedException(__('Odoo could not be reached: %1', $exception->getMessage()));
+        } finally {
+            $this->curl->setOptions([]);
+        }
         if ($status < 200 || $status >= 300) {
             throw new LocalizedException(__('Odoo returned HTTP %1.', $status));
         }
 
-        return $this->decode((string) $this->curl->getBody());
+        return $this->decode($body);
     }
 
     /**
@@ -37,18 +56,21 @@ class XmlRpcClient
      */
     private function encodeRequest(string $method, array $params): string
     {
-        $xml = '<?xml version="1.0"?><methodCall><methodName>'
-            . htmlspecialchars($method, ENT_XML1)
+        $xml = '<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>'
+            . $this->escape($method)
             . '</methodName><params>';
         foreach ($params as $param) {
-            $xml .= '<param><value>' . $this->encodeInner($param) . '</value></param>';
+            $xml .= '<param><value>' . $this->encodeValue($param) . '</value></param>';
         }
 
         return $xml . '</params></methodCall>';
     }
 
-    private function encodeInner(mixed $value): string
+    private function encodeValue(mixed $value): string
     {
+        if ($value instanceof \stdClass) {
+            return $this->encodeStruct(get_object_vars($value));
+        }
         if ($value === null) {
             return '<nil/>';
         }
@@ -62,32 +84,70 @@ class XmlRpcClient
             return '<double>' . $value . '</double>';
         }
         if (is_string($value)) {
-            return '<string>' . htmlspecialchars($value, ENT_XML1) . '</string>';
+            return '<string>' . $this->escape($value) . '</string>';
         }
         if (!is_array($value)) {
-            return '<string>' . htmlspecialchars((string) $value, ENT_XML1) . '</string>';
+            return '<string>' . $this->escape((string) $value) . '</string>';
         }
         if (array_is_list($value)) {
             $data = '';
             foreach ($value as $item) {
-                $data .= '<value>' . $this->encodeInner($item) . '</value>';
+                $data .= '<value>' . $this->encodeValue($item) . '</value>';
             }
 
             return '<array><data>' . $data . '</data></array>';
         }
+
+        return $this->encodeStruct($value);
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private function encodeStruct(array $values): string
+    {
         $members = '';
-        foreach ($value as $name => $item) {
-            $members .= '<member><name>' . htmlspecialchars((string) $name, ENT_XML1) . '</name><value>'
-                . $this->encodeInner($item) . '</value></member>';
+        foreach ($values as $name => $item) {
+            $members .= '<member><name>' . $this->escape((string) $name) . '</name><value>'
+                . $this->encodeValue($item) . '</value></member>';
         }
 
         return '<struct>' . $members . '</struct>';
     }
 
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function assertTransport(string $endpoint, string $method): void
+    {
+        if (!in_array($method, self::METHODS, true)) {
+            throw new LocalizedException(__('Odoo XML-RPC method "%1" is not used.', $method));
+        }
+        $parts = parse_url($endpoint);
+        $path = is_array($parts) ? (string) ($parts['path'] ?? '') : '';
+        $allowedPath = str_ends_with($path, '/xmlrpc/2/common') || str_ends_with($path, '/xmlrpc/2/object');
+        if (
+            !is_array($parts)
+            || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host'])
+            || isset($parts['user'])
+            || isset($parts['pass'])
+            || !$allowedPath
+        ) {
+            throw new LocalizedException(__('Odoo XML-RPC requires https://host/xmlrpc/2/common or /xmlrpc/2/object.'));
+        }
+    }
+
     private function decode(string $body): mixed
     {
+        if ($body === '' || strlen($body) > self::MAX_BODY || preg_match('/<!DOCTYPE|<!ENTITY/i', $body) === 1) {
+            throw new LocalizedException(__('Odoo returned a response that is not XML-RPC.'));
+        }
         $previous = libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($body);
+        $xml = simplexml_load_string($body, \SimpleXMLElement::class, LIBXML_NONET);
+        libxml_clear_errors();
         libxml_use_internal_errors($previous);
         if ($xml === false) {
             throw new LocalizedException(__('Odoo returned a response that is not XML-RPC.'));
@@ -114,18 +174,25 @@ class XmlRpcClient
         if ($child === null) {
             return (string) $value;
         }
-        $type = $child->getName();
 
-        return match ($type) {
-            'int', 'i4' => (int) $child,
+        return match ($child->getName()) {
+            'int', 'i4', 'i8' => (int) $child,
             'double' => (float) $child,
             'boolean' => (string) $child === '1',
-            'string' => (string) $child,
+            'string', 'dateTime.iso8601' => (string) $child,
+            'base64' => $this->decodeBase64((string) $child),
             'nil' => null,
             'array' => $this->decodeArray($child),
             'struct' => $this->decodeStruct($child),
             default => (string) $child,
         };
+    }
+
+    private function decodeBase64(string $encoded): string
+    {
+        $decoded = base64_decode($encoded, true);
+
+        return $decoded === false ? $encoded : $decoded;
     }
 
     /**
@@ -134,6 +201,9 @@ class XmlRpcClient
     private function decodeArray(\SimpleXMLElement $array): array
     {
         $items = [];
+        if (!isset($array->data->value)) {
+            return $items;
+        }
         foreach ($array->data->value as $value) {
             $items[] = $this->decodeValue($value);
         }

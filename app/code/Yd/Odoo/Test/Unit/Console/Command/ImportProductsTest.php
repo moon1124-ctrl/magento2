@@ -52,6 +52,7 @@ class ImportProductsTest extends TestCase
 
         self::assertSame(0, $status);
         self::assertStringContainsString('Dry run', $tester->getDisplay());
+        self::assertStringContainsString('Magento was not changed', $tester->getDisplay());
         self::assertStringContainsString('036000291452', $tester->getDisplay());
         self::assertStringContainsString('0036000291452', $tester->getDisplay());
     }

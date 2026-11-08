@@ -14,10 +14,11 @@
                 </field>
                 <field id="url" translate="label" type="text" sortOrder="20" showInDefault="1">
                     <label>Odoo URL</label>
-                    <comment>Example: https://odoo.example.com</comment>
+                    <comment>Example: https://odoo.example.com. Calls use /xmlrpc/2/common and /xmlrpc/2/object. HTTP is refused. Put a non-standard TLS port in the URL, for example https://odoo.example.com:8069.</comment>
                 </field>
                 <field id="port" translate="label" type="text" sortOrder="30" showInDefault="1">
                     <label>Port</label>
+                    <comment>Used only when the URL has no port and this value is not 443 or 8069. 8069 is Odoo's cleartext port and is not added to an https:// URL.</comment>
                 </field>
                 <field id="database" translate="label" type="text" sortOrder="40" showInDefault="1">
                     <label>Database</label>

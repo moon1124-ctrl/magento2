@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Octocub\UpcCopy\Model;
 
 use Magento\Catalog\Model\Product;
-use Magento\Framework\Exception\LocalizedException;
 
+/**
+ * Keeps UPC and EAN values already stored on the product.
+ *
+ * Odoo assigns GS1 identifiers and prints Zebra labels. This save hook does not
+ * generate a number, copy the SKU into a barcode, or replace a value Odoo sent.
+ */
 class Assigner
 {
-    public function __construct(
-        private readonly Generator $generator,
-        private readonly CatalogCodeLookup $lookup
-    ) {
+    public function __construct(private readonly CatalogCodeLookup $lookup)
+    {
     }
 
-    /**
-     * @throws LocalizedException
-     */
     public function assign(Product $product): void
     {
         $present = $this->lookup->existingCodes();
@@ -25,17 +25,6 @@ class Assigner
             return;
         }
         $this->preserveStored($product, $present);
-        $this->copyThirteenDigitSku($product, $present);
-        if (!$this->generator->isEnabled() || !$this->canGenerate($product, $present)) {
-            return;
-        }
-        $code = $this->unusedCode($product);
-        foreach ($present as $attribute) {
-            $current = $this->knownValue($product, $attribute);
-            if ($current['known'] && !$this->hasValue($current['value'])) {
-                $product->setData($attribute, $code);
-            }
-        }
     }
 
     /**
@@ -62,49 +51,6 @@ class Assigner
                 $product->setData($code, $storedValue);
             }
         }
-    }
-
-    /**
-     * @param string[] $present
-     */
-    private function copyThirteenDigitSku(Product $product, array $present): void
-    {
-        $sku = (string) $product->getSku();
-        if (!preg_match('/^\d{13}$/', $sku)) {
-            return;
-        }
-        // An Odoo barcode already stored on either field must stay as assigned.
-        // Copy the SKU only when every present barcode field is still empty.
-        foreach ($present as $code) {
-            $current = $this->knownValue($product, $code);
-            if ($current['known'] && $this->hasValue($current['value'])) {
-                return;
-            }
-        }
-        foreach ($present as $code) {
-            $current = $this->knownValue($product, $code);
-            if ($current['known'] && !$this->hasValue($current['value'])) {
-                $product->setData($code, $sku);
-            }
-        }
-    }
-
-    /**
-     * Generate only when every UPC and EAN attribute is in this save and still empty.
-     * A missing key means this is a partial save and the stored value must be left alone.
-     *
-     * @param string[] $present
-     */
-    private function canGenerate(Product $product, array $present): bool
-    {
-        foreach ($present as $code) {
-            $current = $this->knownValue($product, $code);
-            if (!$current['known'] || $this->hasValue($current['value'])) {
-                return false;
-            }
-        }
-
-        return $present !== [];
     }
 
     /**
@@ -138,25 +84,5 @@ class Assigner
     private function hasValue(mixed $value): bool
     {
         return $value !== null && $value !== '';
-    }
-
-    /**
-     * @throws LocalizedException
-     */
-    private function unusedCode(Product $product): string
-    {
-        $productId = (int) $product->getId();
-        $except = $productId > 0 ? $productId : null;
-        for ($attempt = 0; $attempt < 20; $attempt++) {
-            $code = $this->generator->next();
-            if (strlen($code) !== 12 || !CheckDigit::isValid($code)) {
-                throw new LocalizedException(__('The generated UPC-A number is not valid.'));
-            }
-            if (!$this->lookup->isUsed($code, $except)) {
-                return $code;
-            }
-        }
-
-        throw new LocalizedException(__('A unique UPC number could not be generated.'));
     }
 }

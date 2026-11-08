@@ -36,7 +36,7 @@ class ImportProducts extends Command
         try {
             if ((bool) $input->getOption('dry-run')) {
                 $result = $this->importer->preview($sku);
-                $output->writeln('Dry run. Nothing was saved.');
+                $output->writeln('Dry run. Magento was not changed. Odoo was only authenticated, searched, and read.');
             } elseif ($sku !== null) {
                 $result = $this->importer->importOne($sku);
             } else {

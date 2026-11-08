@@ -155,6 +155,7 @@ class ProductImporterTest extends TestCase
             ['write_date', '=', '2019-01-01 00:00:00'],
             ['id', '>', 9],
         ], $calls->domains[0]);
+        self::assertSame(['search', 'read'], $calls->methods);
     }
 
     public function testSingleProductDoesNotReadOrWriteTheCursor(): void
@@ -441,10 +442,13 @@ class ProductImporterTest extends TestCase
         $calls->limits = [];
         $calls->orders = [];
         $calls->fields = [];
+        $calls->methods = [];
         $gateway->expects($this->exactly(2))->method('execute')->willReturnCallback(
             function (string $model, string $method, array $args, bool $withContext = false) use ($calls, $rows) {
+                $calls->methods[] = $method;
                 self::assertSame('product.product', $model);
                 self::assertTrue($withContext);
+                self::assertContains($method, ['search', 'read']);
                 if ($method === 'search') {
                     $calls->domains[] = $args[0];
                     $calls->limits[] = $args[2];

@@ -9,6 +9,12 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 
+/**
+ * Allocates the next UPC-A body from octocub_upc_sequence.
+ *
+ * Product save does not call this. Odoo assigns GS1 identifiers. The sequence
+ * table stays so an existing counter is not dropped.
+ */
 class Generator
 {
     private const DATA_LENGTH = 11;

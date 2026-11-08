@@ -10,7 +10,7 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 
 /**
- * Reads existing UPC and EAN values so a generated code is not reused and a stored code is not replaced.
+ * Reads stored UPC and EAN values so a product save can put an existing barcode back.
  */
 class CatalogCodeLookup
 {
