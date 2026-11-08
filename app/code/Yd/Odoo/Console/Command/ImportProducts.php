@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Yd\Odoo\Console\Command;
 
+use Magento\Framework\App\Area;
+use Magento\Framework\App\State;
+use Magento\Framework\Exception\LocalizedException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -15,8 +18,10 @@ use Yd\Odoo\Model\ProductImporter;
  */
 class ImportProducts extends Command
 {
-    public function __construct(private readonly ProductImporter $importer)
-    {
+    public function __construct(
+        private readonly ProductImporter $importer,
+        private readonly State $state
+    ) {
         parent::__construct();
     }
 
@@ -34,6 +39,7 @@ class ImportProducts extends Command
         $sku = is_string($sku) ? trim($sku) : '';
         $sku = $sku === '' ? null : $sku;
         try {
+            $this->initializeArea();
             if ((bool) $input->getOption('dry-run')) {
                 $result = $this->importer->preview($sku);
                 $output->writeln('Dry run. Magento was not changed. Odoo was only authenticated, searched, and read.');
@@ -69,5 +75,19 @@ class ImportProducts extends Command
         ));
 
         return $result->failed > 0 ? Command::FAILURE : Command::SUCCESS;
+    }
+
+    /**
+     * Product save reads the area from Product::getIdentities(). The CLI starts
+     * with none. Cron already set crontab in Magento\Framework\App\Cron before
+     * the job runs, and this command is not that job, so an existing area stays.
+     */
+    private function initializeArea(): void
+    {
+        try {
+            $this->state->getAreaCode();
+        } catch (LocalizedException) {
+            $this->state->setAreaCode(Area::AREA_ADMINHTML);
+        }
     }
 }
